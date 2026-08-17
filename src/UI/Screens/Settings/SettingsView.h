@@ -110,6 +110,7 @@ namespace UI
 
 	  private:
 		void updateThemePreview();
+		void updateScreenRotationSelection();
 
 		void onInit() override;
 		void onShow() override;
@@ -120,6 +121,8 @@ namespace UI
 		ThemePreview m_themePreview{"theme_preview", getRoot()};
 		LvSettingsToggle m_enableAnimations{"enable_animations", getRoot()};
 		DropdownMenu m_screenRotation{"screen_rotation", getRoot()};
+		Modal<MessageBox> m_screenRotationConfirm{
+			"screen_rotation_confirm", getRoot(), layout_t(0, 0, 70, LV_SIZE_CONTENT)};
 	};
 
 	class DeveloperSettings : public View<DeveloperSettingsPresenter, SettingsTab>

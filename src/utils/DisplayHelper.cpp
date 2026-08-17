@@ -25,6 +25,16 @@
 #  define DISP_LCD_BACKLIGHT_DISABLE 0x105
 #endif
 
+namespace Display
+{
+	bool isPortrait()
+	{
+		/* Both of these are rotation aware, so this holds whether the rotation is applied to the display (hardware)
+		 * or baked into the size the display was created with (simulation) */
+		return lv_display_get_vertical_resolution(NULL) > lv_display_get_horizontal_resolution(NULL);
+	}
+} // namespace Display
+
 // Define a structure to hold parameters for brightness operations.
 // The actual structure may differ based on the driver's header files.
 struct BrightnessParam
@@ -172,14 +182,37 @@ static bool updateSplashScreenRotation(DisplayRotation rotation)
 	return true;
 }
 
-// Rotates the display and persists the setting.
-void DisplayHelper::setRotation(DisplayRotation rotation)
+// Rotates the display to match a rotation that has already been decided on. Only meaningful on hardware, where the
+// panel is always driven at its native resolution and LVGL compensates for how it is physically mounted.
+void DisplayHelper::applyRotation(DisplayRotation rotation)
 {
 	ZoneScoped;
 	UI_LOCK();
 	lv_display_set_rotation(lv_display_get_default(), toLvRotation(rotation));
+}
+
+// Persists the rotation, applying it immediately if that is possible without re-laying out the UI.
+void DisplayHelper::setRotation(DisplayRotation rotation)
+{
+	ZoneScoped;
 	updateSplashScreenRotation(rotation);
 	StorageHelper::setData(ID_DISPLAY_ROTATION, rotation);
+
+	/* Rotating between landscape and portrait changes the canvas the views were laid out against, so it only takes
+	 * effect on the next startup. The caller is responsible for restarting. */
+	if (Display::isPortrait() != Display::isPortrait(rotation))
+	{
+		return;
+	}
+
+#if !SIMULATION
+	applyRotation(rotation);
+#endif
+	/* In simulation the window is created at the canvas size with no LVGL rotation, so there is nothing to apply:
+	 * the flipped rotations differ from the unflipped ones only in how the panel is physically mounted. Rotating the
+	 * display here would desynchronise input from rendering - the SDL backend only honours rotation when
+	 * LV_SDL_RENDER_MODE is LV_DISPLAY_RENDER_MODE_PARTIAL, and it is built with DIRECT, but lv_indev rotates
+	 * pointer events regardless. */
 }
 
 // Gets the currently stored display rotation.

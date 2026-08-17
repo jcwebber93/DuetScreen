@@ -308,6 +308,10 @@
       "screen": "Scherm",
       "screen_header": "Scherminstellingen",
       "screen_rotation": "Schermrotatie:",
+      "screen_rotation_confirm": {
+        "title": "Schermrotatie wijzigen",
+        "text": "Wisselen tussen liggend en staand vereist een herstart. Doorgaan?"
+      },
       "screen_rotation_options": {
         "rotation_0": "0°",
         "rotation_90": "90°",

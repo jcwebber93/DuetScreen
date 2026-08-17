@@ -308,6 +308,10 @@
       "screen": "Pantalla",
       "screen_header": "Ajustes de pantalla",
       "screen_rotation": "Rotación de pantalla:",
+      "screen_rotation_confirm": {
+        "title": "Cambiar rotación de pantalla",
+        "text": "Cambiar entre horizontal y vertical requiere un reinicio. ¿Continuar?"
+      },
       "screen_rotation_options": {
         "rotation_0": "0°",
         "rotation_90": "90°",

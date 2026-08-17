@@ -308,6 +308,10 @@
       "screen": "Écran",
       "screen_header": "Paramètres de l'écran",
       "screen_rotation": "Rotation de l'écran :",
+      "screen_rotation_confirm": {
+        "title": "Changer la rotation de l'écran",
+        "text": "Passer du mode paysage au mode portrait nécessite un redémarrage. Continuer ?"
+      },
       "screen_rotation_options": {
         "rotation_0": "0°",
         "rotation_90": "90°",

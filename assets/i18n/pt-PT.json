@@ -308,6 +308,10 @@
       "screen": "Ecrã",
       "screen_header": "Definições do ecrã",
       "screen_rotation": "Rotação do ecrã:",
+      "screen_rotation_confirm": {
+        "title": "Alterar rotação do ecrã",
+        "text": "Alternar entre horizontal e vertical requer um reinício. Continuar?"
+      },
       "screen_rotation_options": {
         "rotation_0": "0°",
         "rotation_90": "90°",

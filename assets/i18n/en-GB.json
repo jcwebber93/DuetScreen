@@ -308,6 +308,10 @@
       "screen": "Screen",
       "screen_header": "Screen Settings",
       "screen_rotation": "Screen Rotation:",
+      "screen_rotation_confirm": {
+        "title": "Change Screen Rotation",
+        "text": "Rotating between landscape and portrait requires a restart. Continue?"
+      },
       "screen_rotation_options": {
         "rotation_0": "0°",
         "rotation_90": "90°",

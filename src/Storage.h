@@ -163,6 +163,7 @@ extern const StorageKey<ResponseType> ID_NOTIFICATION_LEVEL;
 extern const StorageKey<bool> ID_NOTIFICATION_AUTO_CLOSE_ERROR;
 
 extern const StorageKey<bool> ID_UI_CONSOLE_COMMAND_LIST_COLLAPSED;
+extern const StorageKey<bool> ID_UI_CONSOLE_COMMAND_LIST_COLLAPSED_PORTRAIT;
 
 extern const StorageKey<std::vector<float>, std::vector<float> (*)()> ID_BABYSTEP_AMOUNT;
 extern const StorageKey<std::vector<float>, std::vector<float> (*)()> ID_MOVE_DISTANCES;

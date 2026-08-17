@@ -68,7 +68,10 @@ namespace UI
 		m_axisControlCont.setFlexGrow(1);
 		m_axisControlCont.setFlexFlow(LV_FLEX_FLOW_ROW);
 		m_axisControlCont.setFlexAlign(LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-		m_xyControl.setSize(LV_PCT(38), LV_PCT(100));
+		/* The axis controls are centred in the container with space to spare on either side, so they are sized
+		 * generously to give the jog buttons a bigger touch target. m_zControl is kept in proportion with
+		 * m_xyControl, and the generic axis controls take their width from m_zControl. */
+		m_xyControl.setSize(LV_PCT(49), LV_PCT(100));
 		m_xyControl.setDisableMotorsCallback(
 			[this]()
 			{
@@ -150,7 +153,7 @@ namespace UI
 		m_xyControl.setXLabelCallback([this](float position) { configureNumberpadForAxis('X', position); });
 		m_xyControl.setYLabelCallback([this](float position) { configureNumberpadForAxis('Y', position); });
 
-		m_zControl.setSize(LV_PCT(13), LV_PCT(100));
+		m_zControl.setSize(LV_PCT(17), LV_PCT(100));
 		m_zControl.setMinWidth(LV_SIZE_CONTENT);
 		m_zControl.setAxisLetter('Z');
 		m_zControl.setJogCallback(

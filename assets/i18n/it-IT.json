@@ -308,6 +308,10 @@
       "screen": "Schermo",
       "screen_header": "Impostazioni schermo",
       "screen_rotation": "Rotazione schermo:",
+      "screen_rotation_confirm": {
+        "title": "Cambiare rotazione schermo",
+        "text": "Passare da orizzontale a verticale richiede un riavvio. Continuare?"
+      },
       "screen_rotation_options": {
         "rotation_0": "0°",
         "rotation_90": "90°",

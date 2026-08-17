@@ -308,6 +308,10 @@
       "screen": "Bildschirm",
       "screen_header": "Bildschirmeinstellungen",
       "screen_rotation": "Bildschirmdrehung:",
+      "screen_rotation_confirm": {
+        "title": "Bildschirmdrehung ändern",
+        "text": "Das Wechseln zwischen Quer- und Hochformat erfordert einen Neustart. Fortfahren?"
+      },
       "screen_rotation_options": {
         "rotation_0": "0°",
         "rotation_90": "90°",

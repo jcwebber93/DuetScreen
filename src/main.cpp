@@ -55,7 +55,7 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static lv_display_t* hal_init(int32_t w, int32_t h);
+static lv_display_t* hal_init(DisplayRotation rotation);
 static void http_test();
 static int usb_test();
 static int set_thread_priority(pthread_t thread_id, int policy, int priority);
@@ -120,15 +120,15 @@ int main(int argc, char** argv)
 	}
 
 	/*Initialize the HAL (display, input devices, tick) for LVGL*/
-	lv_display_t* display = hal_init(1024, 600);
+	/* The rotation has to be applied before any UI is created so that every view is laid out against the final
+	 * canvas. Rotating between landscape and portrait therefore requires a restart. */
+	lv_display_t* display = hal_init(StorageHelper::getData(ID_DISPLAY_ROTATION));
 
 	DisplayHelper::setBrightness(StorageHelper::getData(ID_SYS_BRIGHTNESS_KEY));
 	{
 		ZoneScopedN("Themes::init");
 		UI::Themes::init(display);
 	}
-
-	DisplayHelper::setRotation(StorageHelper::getData(ID_DISPLAY_ROTATION));
 
 	UI::HomeView& home = UI::HomeView::instance();
 	home.show();
@@ -400,10 +400,10 @@ static const char* getenv_default(const char* name, const char* dflt)
  * Initialize the Hardware Abstraction Layer (HAL) for the LVGL graphics
  * library
  */
-static lv_display_t* hal_init(int32_t w, int32_t h)
+static lv_display_t* hal_init(DisplayRotation rotation)
 {
 	ZoneScoped;
-	LOG_INFO("Initialising display");
+	LOG_INFO("Initialising display, rotation {:s}", magic_enum::enum_name(rotation));
 
 	lv_display_t* disp = NULL;
 	lv_group_set_default(lv_group_create());
@@ -414,7 +414,13 @@ static lv_display_t* hal_init(int32_t w, int32_t h)
 	{
 		ZoneScopedN("Framebuffer Initialization");
 		disp = lv_linux_fbdev_create();
-		lv_display_set_resolution(disp, w, h);
+		/* The framebuffer is always the panel's native landscape resolution, so LVGL has to rotate the rendered
+		 * output to compensate for how the panel is physically mounted. lv_display_set_rotation() swaps the
+		 * reported resolution, so the UI is still laid out against the upright canvas.
+		 * Touch input needs no special handling: lv_evdev maps raw touches into the panel's coordinate space,
+		 * which lv_indev then rotates to match via lv_display_rotate_point(). */
+		lv_display_set_resolution(disp, Display::PANEL_WIDTH, Display::PANEL_HEIGHT);
+		DisplayHelper::applyRotation(rotation);
 	}
 
 #  if LV_USE_EVDEV
@@ -514,7 +520,15 @@ static lv_display_t* hal_init(int32_t w, int32_t h)
 
 	{
 		ZoneScopedN("SDL Window Creation");
-		disp = lv_sdl_window_create(w, h);
+		/* There is no physical panel to compensate for, so the window is created at the final canvas size rather
+		 * than rendering at the native resolution and rotating. This keeps the simulator window upright in the
+		 * portrait rotations and gives the UI the same canvas it gets on hardware.
+		 * Rotating the display instead would not work: the SDL backend only honours rotation when LV_SDL_RENDER_MODE
+		 * is LV_DISPLAY_RENDER_MODE_PARTIAL, and it is built with DIRECT, so the rendering ignores the rotation while
+		 * lv_indev still rotates pointer events - 90 degrees renders as torn scanlines and 180 leaves an upright
+		 * screen with an inverted mouse. A consequence of not rotating is that the flipped rotations are
+		 * indistinguishable from the unflipped ones in the simulator; they only differ in how the panel is mounted. */
+		disp = lv_sdl_window_create(Display::canvasWidth(rotation), Display::canvasHeight(rotation));
 		lv_obj_set_name(lv_screen_active(), "screen_active");
 	}
 

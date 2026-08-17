@@ -64,6 +64,10 @@ constexpr StorageKey<ResponseType> ID_NOTIFICATION_LEVEL = {"ui:notification_lev
 constexpr StorageKey<bool> ID_NOTIFICATION_AUTO_CLOSE_ERROR = {"ui:notification_auto_close_error", false};
 
 constexpr StorageKey<bool> ID_UI_CONSOLE_COMMAND_LIST_COLLAPSED = {"ui:console_command_list_collapsed", false};
+/* Kept separate from the landscape key because there is far less width to spare for the command list in portrait,
+ * so the sensible default and the user's preference are different in each */
+constexpr StorageKey<bool> ID_UI_CONSOLE_COMMAND_LIST_COLLAPSED_PORTRAIT = {
+	"ui:console_command_list_collapsed_portrait", true};
 
 constexpr StorageKey<std::vector<float>, std::vector<float> (*)()> ID_BABYSTEP_AMOUNT = {
 	"ui:baby_step_amount", +[]() -> std::vector<float> { return {0.01f, 0.05f}; }};

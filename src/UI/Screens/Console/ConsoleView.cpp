@@ -6,6 +6,7 @@
 #include "UI/Core/Navigation.h"
 #include "UI/Styles/Styles.h"
 #include "i18n/i18n.h"
+#include "utils/DisplayHelper.h"
 #include "utils/StorageHelper.h"
 #include "utils/TimeHelper.h"
 
@@ -16,6 +17,14 @@ namespace UI
 	static constexpr lv_coord_t s_gcodeWidth = 50;
 	static constexpr lv_coord_t s_descriptionWidth = 500;
 	static constexpr lv_coord_t s_inputBtnSize = 50;
+
+	/* Whether the command list is collapsed is remembered per orientation, since the amount of width there is to
+	 * spare for it is completely different between the two */
+	static const StorageKey<bool>& commandListCollapsedKey()
+	{
+		return Display::isPortrait() ? ID_UI_CONSOLE_COMMAND_LIST_COLLAPSED_PORTRAIT
+									 : ID_UI_CONSOLE_COMMAND_LIST_COLLAPSED;
+	}
 
 	ConsoleView::ConsoleView(const std::string& name, LvObj& parent)
 		: View(name, parent, layout_t(0, 0, 100, 100))
@@ -112,7 +121,7 @@ namespace UI
 			this);
 
 		m_commandList.getListContainer().hide();
-		showCommandList(!StorageHelper::getData(ID_UI_CONSOLE_COMMAND_LIST_COLLAPSED), LV_ANIM_OFF);
+		showCommandList(!StorageHelper::getData(commandListCollapsedKey()), LV_ANIM_OFF);
 	}
 
 	void ConsoleView::clear()
@@ -191,7 +200,7 @@ namespace UI
 			return;
 		}
 
-		StorageHelper::setData(ID_UI_CONSOLE_COMMAND_LIST_COLLAPSED, !show);
+		StorageHelper::setData(commandListCollapsedKey(), !show);
 		m_commandVisibility.setChecked(show);
 
 		uint8_t start = show ? 1 : 10;

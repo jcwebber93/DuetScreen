@@ -18,7 +18,7 @@
 #include <ranges>
 
 #define USE_MODAL_NUMBERPAD_FOR_IP_ADDRESS 1
-#define ENABLE_90_ROTATION 0
+#define ENABLE_90_ROTATION 1
 
 namespace UI
 {
@@ -680,14 +680,42 @@ namespace UI
 			m_screenRotation.addOption(_(option.name));
 		}
 		m_screenRotation.setSelectedCallback(
-			[](uint32_t index, std::string_view /* option */)
+			[this](uint32_t index, std::string_view /* option */)
 			{
 				if (index >= s_screenRotations.size())
 				{
 					LOG_ERROR("Invalid screen rotation index: {:d}", index);
 					return;
 				}
-				DisplayHelper::setRotation(s_screenRotations[index].rotation);
+
+				const DisplayRotation rotation = s_screenRotations[index].rotation;
+
+				/* Rotating within the same orientation only changes which way up the panel is, which LVGL can do
+				 * live. Swapping between landscape and portrait changes the canvas every view was laid out
+				 * against, so it can only take effect on the next startup. */
+				if (Display::isPortrait(rotation) == Display::isPortrait())
+				{
+					DisplayHelper::setRotation(rotation);
+					return;
+				}
+
+				m_screenRotationConfirm.setTitle(_("settings.screen_rotation_confirm.title"));
+				m_screenRotationConfirm.setText(_("settings.screen_rotation_confirm.text"));
+				m_screenRotationConfirm.setOkCallback(
+					[rotation]()
+					{
+						DisplayHelper::setRotation(rotation);
+#if SIMULATION
+						Restart();
+#else
+						/* A service restart would leave the framebuffer and the evdev touch device in their
+						 * previous state, which brings the panel back rotated but with touch completely dead */
+						Reboot();
+#endif
+					});
+				/* Put the dropdown back so it does not claim a rotation that was never applied */
+				m_screenRotationConfirm.setCancelCallback([this]() { updateScreenRotationSelection(); });
+				openModal(&m_screenRotationConfirm);
 			});
 	}
 
@@ -727,6 +755,12 @@ namespace UI
 		m_icons.setSelected(_(fmt::format("theme.icon_sets.{:s}", Themes::getIconFolder())));
 		m_enableAnimations.setChecked(StorageHelper::getData(ID_UI_ANIMATIONS_ENABLED));
 
+		updateScreenRotationSelection();
+	}
+
+	void DisplaySettings::updateScreenRotationSelection()
+	{
+		ZoneScoped;
 		const uint32_t rotationIndex = []()
 		{
 			const auto rotation = DisplayHelper::getRotation();

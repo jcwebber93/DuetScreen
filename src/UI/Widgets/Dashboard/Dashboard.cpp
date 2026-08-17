@@ -10,11 +10,19 @@
 #include "Debug.h"
 #include "UI/Styles/Styles.h"
 #include "i18n/i18n.h"
+#include "utils/DisplayHelper.h"
 
 namespace UI
 {
+	/* Landscape: the tabs sit in their own column beside the tool list and graph */
 	static constexpr int32_t s_mainWindowLayoutColDsc[3] = {LV_GRID_FR(3), LV_GRID_FR(2), LV_GRID_TEMPLATE_LAST};
 	static constexpr int32_t s_mainWindowLayoutRowDsc[3] = {LV_GRID_CONTENT, LV_GRID_FR(1), LV_GRID_TEMPLATE_LAST};
+
+	/* Portrait: there is not enough width for two columns, so everything is stacked instead. The tabs get twice the
+	 * height of the graph since they have far more to show, with the tool list kept next to the graph it belongs to. */
+	static constexpr int32_t s_portraitLayoutColDsc[2] = {LV_GRID_FR(1), LV_GRID_TEMPLATE_LAST};
+	static constexpr int32_t s_portraitLayoutRowDsc[4] = {
+		LV_GRID_FR(2), LV_GRID_CONTENT, LV_GRID_FR(1), LV_GRID_TEMPLATE_LAST};
 
 	Dashboard::Dashboard(const std::string& name, LvObj& parent)
 		: View(name, parent, layout_t(0, 0, 100, 100))
@@ -29,12 +37,22 @@ namespace UI
 		m_macroView.addStyle(Themes::getLvglStyles().card);
 
 		setLayoutStyle(LV_LAYOUT_GRID);
-		setGridDsc(s_mainWindowLayoutColDsc, s_mainWindowLayoutRowDsc);
 		setFlag(LV_OBJ_FLAG_SCROLLABLE, false);
 
-		setGridCell(m_toolList, LV_GRID_ALIGN_STRETCH, 0, 1, LV_GRID_ALIGN_START, 0, 1);
-		setGridCell(m_graph, LV_GRID_ALIGN_STRETCH, 0, 1, LV_GRID_ALIGN_STRETCH, 1, 1);
-		setGridCell(m_tabs, LV_GRID_ALIGN_STRETCH, 1, 1, LV_GRID_ALIGN_STRETCH, 0, 2);
+		if (Display::isPortrait())
+		{
+			setGridDsc(s_portraitLayoutColDsc, s_portraitLayoutRowDsc);
+			setGridCell(m_tabs, LV_GRID_ALIGN_STRETCH, 0, 1, LV_GRID_ALIGN_STRETCH, 0, 1);
+			setGridCell(m_toolList, LV_GRID_ALIGN_STRETCH, 0, 1, LV_GRID_ALIGN_START, 1, 1);
+			setGridCell(m_graph, LV_GRID_ALIGN_STRETCH, 0, 1, LV_GRID_ALIGN_STRETCH, 2, 1);
+		}
+		else
+		{
+			setGridDsc(s_mainWindowLayoutColDsc, s_mainWindowLayoutRowDsc);
+			setGridCell(m_toolList, LV_GRID_ALIGN_STRETCH, 0, 1, LV_GRID_ALIGN_START, 0, 1);
+			setGridCell(m_graph, LV_GRID_ALIGN_STRETCH, 0, 1, LV_GRID_ALIGN_STRETCH, 1, 1);
+			setGridCell(m_tabs, LV_GRID_ALIGN_STRETCH, 1, 1, LV_GRID_ALIGN_STRETCH, 0, 2);
+		}
 
 		/* Toollist */
 		m_toolList.setHeight(LV_SIZE_CONTENT);
