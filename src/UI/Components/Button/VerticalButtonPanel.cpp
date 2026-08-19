@@ -80,6 +80,33 @@ namespace UI
 			this);
 	}
 
+	void VerticalButtonPanel::setHorizontal(bool horizontal)
+	{
+		ZoneScoped;
+		UI_LOCK();
+		m_horizontal = horizontal;
+		setFlexFlow(horizontal ? LV_FLEX_FLOW_ROW : LV_FLEX_FLOW_COLUMN);
+		/* The children stretch along the flex axis and fill the container on the cross axis, so the two sizes
+		 * swap over when the flow does. */
+		iterateChildren(
+			[horizontal](size_t /* i */, LvObj& child)
+			{
+				child.setWidth(horizontal ? LV_SIZE_CONTENT : LV_PCT(100));
+				child.setHeight(horizontal ? LV_PCT(100) : LV_SIZE_CONTENT);
+			});
+
+		/* In a row the text-bearing children size to their content and the arrows absorb the slack. Letting the
+		 * text grow instead just clips the labels, since growing overrides the content width. */
+		m_reset.setFlexGrow(horizontal ? 0 : 1);
+		m_values.setFlexGrow(horizontal ? 0 : 2);
+		if (horizontal)
+		{
+			m_reset.setWidth(LV_SIZE_CONTENT);
+			m_values.setWidth(LV_SIZE_CONTENT);
+			m_values.setListSize(LV_SIZE_CONTENT, LV_PCT(100));
+		}
+	}
+
 	void VerticalButtonPanel::setIncrementIcon(std::string_view icon)
 	{
 		ZoneScoped;
@@ -144,9 +171,12 @@ namespace UI
 		ZoneScoped;
 		auto btn = std::make_unique<Button>(fmt::format("value_btn_{}", index), parent);
 		btn->getLabel().setLongMode(LV_LABEL_LONG_MODE_WRAP);
-		btn->setSize(0, LV_PCT(100));		// width is to allow text wrapping
+		/* Width 0 lets the label wrap, which is what the tall column needs; the wide bar has room for the
+		 * value on one line instead. */
+		btn->setSize(m_horizontal ? LV_SIZE_CONTENT : 0, LV_PCT(100));
 		btn->setMinHeight(LV_SIZE_CONTENT); // FIXME: this seems to cause a lvgl layout bug
-		btn->setFlexGrow(1);
+		/* Growing would override the content width and clip the label */
+		btn->setFlexGrow(m_horizontal ? 0 : 1);
 		btn->setCheckable(true);
 		btn->setChecked(index == m_selectedValueIndex);
 		btn->setUserData(reinterpret_cast<void*>(static_cast<uintptr_t>(index)));

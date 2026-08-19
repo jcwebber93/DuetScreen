@@ -59,6 +59,9 @@ static lv_display_t* hal_init(DisplayRotation rotation);
 static void http_test();
 static int usb_test();
 static int set_thread_priority(pthread_t thread_id, int policy, int priority);
+#if SIMULATION
+static void openStartupView(std::string_view name, UI::HomeView& home);
+#endif
 
 /**********************
  *  STATIC VARIABLES
@@ -132,6 +135,14 @@ int main(int argc, char** argv)
 
 	UI::HomeView& home = UI::HomeView::instance();
 	home.show();
+
+#if SIMULATION
+	/* Lets scripts/screenshot.py capture views that would otherwise have to be clicked to. Inert unless set. */
+	if (const char* startupView = std::getenv("DUETSCREEN_STARTUP_VIEW"); startupView != nullptr)
+	{
+		openStartupView(startupView, home);
+	}
+#endif
 
 #if HARDWARE_TEST
 	UI::HardwareTest hw_test;
@@ -589,6 +600,53 @@ static lv_display_t* hal_init(DisplayRotation rotation)
 
 	return disp;
 }
+
+#if SIMULATION
+/*
+ * Opens a view by name at startup, so screenshots can be taken of screens that are otherwise only reachable by
+ * touch. Driven by DUETSCREEN_STARTUP_VIEW; see scripts/screenshot.py.
+ */
+static void openStartupView(std::string_view name, UI::HomeView& home)
+{
+	ZoneScoped;
+	LOG_INFO("Opening startup view '{:s}'", name);
+
+	if (name == "dashboard")
+		home.getDashboard().showJobsTab();
+	else if (name == "status")
+		home.getDashboard().showStatusTab();
+	else if (name == "console")
+		UI::openScreen(&home.getConsoleView(), true);
+	else if (name == "files")
+		UI::openScreen(&home.getFileView(), true);
+	else if (name == "settings")
+		UI::openScreen(&home.getSettingsView(), true);
+	else if (name == "settings_display")
+	{
+		UI::openScreen(&home.getSettingsView(), true);
+		home.getSettingsView().showDisplaySettings();
+	}
+	else if (name.starts_with("control"))
+	{
+		UI::openScreen(&home.getControlView(), true);
+		auto& control = home.getControlView();
+		if (name == "control_temperature")
+			control.showTemperatureView();
+		else if (name == "control_heightmap")
+			control.showHeightmapView();
+		else if (name == "control_fan")
+			control.showFanView();
+		else if (name == "control_object_cancel")
+			control.showObjectCancelView();
+		else
+			control.showMoveView(); /* plain "control" and "control_move" */
+	}
+	else
+	{
+		LOG_WARN("Unknown startup view '{:s}', staying on the dashboard", name);
+	}
+}
+#endif
 
 int set_thread_priority(pthread_t thread_id, int policy, int priority)
 {

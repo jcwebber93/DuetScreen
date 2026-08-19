@@ -44,6 +44,21 @@ namespace UI
 		m_buttonPanel.getDecrementButton().addStyle(Themes::getLvglStyles().actionBtn);
 	}
 
+	void BabyStep::setHorizontal(bool horizontal)
+	{
+		ZoneScoped;
+		UI_LOCK();
+		setFlexFlow(horizontal ? LV_FLEX_FLOW_ROW : LV_FLEX_FLOW_COLUMN);
+		setFlexAlign(LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+		m_buttonPanel.setHorizontal(horizontal);
+		if (horizontal)
+		{
+			/* The header sits to the left of the buttons rather than above them */
+			m_header.setWidth(LV_SIZE_CONTENT);
+			m_buttonPanel.setHeight(LV_SIZE_CONTENT);
+		}
+	}
+
 	void BabyStep::setBabyStepValue(float value)
 	{
 		ZoneScoped;

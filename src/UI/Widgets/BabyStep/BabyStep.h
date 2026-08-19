@@ -21,6 +21,8 @@ namespace UI
 		void setBabyStepValue(float value);
 		void setNumberPad(ModalNumberPad* numberPad) { m_buttonPanel.setNumberPad(numberPad); }
 		void setDisabled(bool disabled) { m_buttonPanel.setDisabled(disabled); }
+		// Lays the control out as a wide, short bar instead of a tall column.
+		void setHorizontal(bool horizontal);
 
 	  protected:
 		void onShow() override;

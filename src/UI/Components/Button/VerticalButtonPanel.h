@@ -27,6 +27,8 @@ namespace UI
 		void setValueLabelFmt(std::string_view fmt);
 		void setIncrementValues(std::span<const float> values);
 		void setDisabled(bool disabled);
+		// Lays the buttons out in a row instead of a column, for use in a wide, short space.
+		void setHorizontal(bool horizontal);
 
 		float getSelectedValue() const;
 		void setSelectedValueIndex(size_t index);
@@ -57,6 +59,7 @@ namespace UI
 		List<Button> m_values;
 
 		ModalNumberPad* m_numberPad = nullptr;
+		bool m_horizontal = false;
 
 		size_t m_selectedValueIndex = 0;
 

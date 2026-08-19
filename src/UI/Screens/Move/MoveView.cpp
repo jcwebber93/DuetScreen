@@ -4,6 +4,7 @@
 #include "UI/Core/Navigation.h"
 #include "UI/Styles/Styles.h"
 #include "i18n/i18n.h"
+#include "utils/DisplayHelper.h"
 #include "utils/StorageHelper.h"
 #include "utils/UnitSystem.h"
 
@@ -13,6 +14,13 @@ namespace UI
 	static std::vector<uint32_t> s_feedRates; // mm/s
 	static size_t s_currentDistanceIndex = 4;
 	static size_t s_currentFeedrateIndex = 3;
+
+	/* The axis controls are laid out in equal-width columns: the XY pad is three wide, and Z and every
+	 * additional axis are one each. Sizing them from the actual axis count means a machine with only XYZ
+	 * gets the full width instead of leaving room for axes it does not have. A couple of percent is held
+	 * back so the column gaps do not push the row into overflowing. */
+	static constexpr int32_t s_axisControlTotalPct = 98;
+	static constexpr size_t s_xyControlColumns = 3;
 
 	static float getSelectedDistance()
 	{
@@ -68,9 +76,7 @@ namespace UI
 		m_axisControlCont.setFlexGrow(1);
 		m_axisControlCont.setFlexFlow(LV_FLEX_FLOW_ROW);
 		m_axisControlCont.setFlexAlign(LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-		/* The axis controls are centred in the container with space to spare on either side, so they are sized
-		 * generously to give the jog buttons a bigger touch target. m_zControl is kept in proportion with
-		 * m_xyControl, and the generic axis controls take their width from m_zControl. */
+		/* Widths are set in setAxisData() once the axis count is known; these are just a sane starting point. */
 		m_xyControl.setSize(LV_PCT(49), LV_PCT(100));
 		m_xyControl.setDisableMotorsCallback(
 			[this]()
@@ -189,12 +195,27 @@ namespace UI
 		m_genericAxisControls.getListContainer().addStyle(Themes::getLvglStyles().pad_zero);
 
 		/* Babystepping */
-		m_babyStepCont.setSize(LV_PCT(22), LV_PCT(100));
-		m_babyStepCont.setFlexFlow(LV_FLEX_FLOW_COLUMN);
-		m_babyStepCont.setFlexAlign(LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+		if (Display::isPortrait())
+		{
+			/* There is no width to spare for a side panel, so babystepping moves out of the central row and onto
+			 * the bottom of the screen as a wide bar. That hands the whole width to the jog and home buttons. */
+			m_babyStepCont.setParent(getRoot());
+			m_babyStepCont.setSize(LV_PCT(100), LV_SIZE_CONTENT);
+			m_babyStepCont.setFlexFlow(LV_FLEX_FLOW_ROW);
+			m_babyStepCont.setFlexAlign(LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
 
-		m_babystep.setSize(LV_PCT(100), LV_PCT(100));
-		m_babystep.setFlexGrow(1);
+			m_babystep.setSize(LV_PCT(100), LV_SIZE_CONTENT);
+			m_babystep.setHorizontal(true);
+		}
+		else
+		{
+			m_babyStepCont.setSize(LV_PCT(22), LV_PCT(100));
+			m_babyStepCont.setFlexFlow(LV_FLEX_FLOW_COLUMN);
+			m_babyStepCont.setFlexAlign(LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+
+			m_babystep.setSize(LV_PCT(100), LV_PCT(100));
+			m_babystep.setFlexGrow(1);
+		}
 		m_babystep.setNumberPad(&m_numberpad);
 
 		/* Bottom Bar */
@@ -443,6 +464,15 @@ namespace UI
 #endif
 
 		LOG_DBG("Remaining axis count: {}", axis_data_excluding_xyz.size());
+
+		/* Give the jog buttons every pixel the axis count allows. m_genericAxisControls copies m_zControl's width
+		 * below, so this has to happen first, and the layout has to be up to date for getWidth() to be correct. */
+		const size_t columns = s_xyControlColumns + 1 + axis_data_excluding_xyz.size();
+		const int32_t columnPct = s_axisControlTotalPct / static_cast<int32_t>(columns);
+		m_xyControl.setWidth(LV_PCT(columnPct * static_cast<int32_t>(s_xyControlColumns)));
+		m_zControl.setWidth(LV_PCT(columnPct));
+		m_zControl.updateLayout();
+
 		m_genericAxisControls.setVisible(!axis_data_excluding_xyz.empty());
 
 		m_genericAxisControls.setItemCount(

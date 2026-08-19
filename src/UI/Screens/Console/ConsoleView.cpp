@@ -17,6 +17,10 @@ namespace UI
 	static constexpr lv_coord_t s_gcodeWidth = 50;
 	static constexpr lv_coord_t s_descriptionWidth = 500;
 	static constexpr lv_coord_t s_inputBtnSize = 50;
+#if ENABLE_CONSOLE_SHELL
+	/* Vertical inset of the pinned shell toggle, matching the y offset it is aligned with */
+	static constexpr lv_coord_t s_shellTogglePadding = 20;
+#endif
 
 	/* Whether the command list is collapsed is remembered per orientation, since the amount of width there is to
 	 * spare for it is completely different between the two */
@@ -95,6 +99,12 @@ namespace UI
 				focusInput();
 			});
 		m_shellToggle.setChecked(false);
+
+		/* The toggle is pinned over the top-right of the output card rather than laid out in it, so reserve a
+		 * matching strip of padding at the top of the card. Without it the first log lines render underneath the
+		 * checkbox. The height is measured rather than hardcoded so it tracks the theme's font and padding. */
+		m_shellToggle.updateLayout();
+		m_outputCont.setStylePad(m_shellToggle.getHeight() + s_shellTogglePadding, LV_PART_MAIN, Padding::TOP);
 #endif
 
 		m_topCont.addStyle(Themes::getLvglStyles().no_border);

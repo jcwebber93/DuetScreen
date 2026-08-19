@@ -563,3 +563,4 @@ cmake_test_discovery*
 
 # Assets
 assets/splash.png
+scripts/screenshot.py

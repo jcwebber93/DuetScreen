@@ -2,12 +2,18 @@
 #include "Debug.h"
 #include "UI/Core/Navigation.h"
 #include "i18n/i18n.h"
+#include "utils/DisplayHelper.h"
 
 #include "ObjectModel/Heightmap.h"
 #include <cmath>
 
 namespace UI
 {
+	/* Portrait: no width for a side column, so the heatmap takes the top and every control stacks beneath it. */
+	static constexpr int32_t s_portraitColDsc[2] = {LV_GRID_FR(1), LV_GRID_TEMPLATE_LAST};
+	static constexpr int32_t s_portraitRowDsc[6] = {
+		LV_GRID_FR(1), LV_GRID_CONTENT, LV_GRID_CONTENT, LV_GRID_CONTENT, LV_GRID_CONTENT, LV_GRID_TEMPLATE_LAST};
+
 	class HeightmapItem : public ListItem
 	{
 	  public:
@@ -211,12 +217,24 @@ namespace UI
 		m_trueBedLevel.addStyle(Themes::getLvglStyles().actionBtn, 0);
 		m_meshBedLevel.addStyle(Themes::getLvglStyles().actionBtn, 0);
 
-		setGridDsc(m_layoutColDsc, m_layoutRowDsc);
-		setGridCell(m_heightmap, LV_GRID_ALIGN_STRETCH, 0, 1, LV_GRID_ALIGN_STRETCH, 0, 3);
-		setGridCell(m_btnCont, LV_GRID_ALIGN_STRETCH, 1, 1, LV_GRID_ALIGN_START, 0, 1);
-		setGridCell(m_heightmapList, LV_GRID_ALIGN_STRETCH, 1, 1, LV_GRID_ALIGN_STRETCH, 1, 1);
-		setGridCell(m_renderMode, LV_GRID_ALIGN_STRETCH, 1, 1, LV_GRID_ALIGN_START, 2, 1);
-		setGridCell(m_statistics, LV_GRID_ALIGN_STRETCH, 0, 2, LV_GRID_ALIGN_START, 3, 1);
+		if (Display::isPortrait())
+		{
+			setGridDsc(s_portraitColDsc, s_portraitRowDsc);
+			setGridCell(m_heightmap, LV_GRID_ALIGN_STRETCH, 0, 1, LV_GRID_ALIGN_STRETCH, 0, 1);
+			setGridCell(m_btnCont, LV_GRID_ALIGN_STRETCH, 0, 1, LV_GRID_ALIGN_START, 1, 1);
+			setGridCell(m_heightmapList, LV_GRID_ALIGN_STRETCH, 0, 1, LV_GRID_ALIGN_START, 2, 1);
+			setGridCell(m_renderMode, LV_GRID_ALIGN_STRETCH, 0, 1, LV_GRID_ALIGN_START, 3, 1);
+			setGridCell(m_statistics, LV_GRID_ALIGN_STRETCH, 0, 1, LV_GRID_ALIGN_START, 4, 1);
+		}
+		else
+		{
+			setGridDsc(m_layoutColDsc, m_layoutRowDsc);
+			setGridCell(m_heightmap, LV_GRID_ALIGN_STRETCH, 0, 1, LV_GRID_ALIGN_STRETCH, 0, 3);
+			setGridCell(m_btnCont, LV_GRID_ALIGN_STRETCH, 1, 1, LV_GRID_ALIGN_START, 0, 1);
+			setGridCell(m_heightmapList, LV_GRID_ALIGN_STRETCH, 1, 1, LV_GRID_ALIGN_STRETCH, 1, 1);
+			setGridCell(m_renderMode, LV_GRID_ALIGN_STRETCH, 1, 1, LV_GRID_ALIGN_START, 2, 1);
+			setGridCell(m_statistics, LV_GRID_ALIGN_STRETCH, 0, 2, LV_GRID_ALIGN_START, 3, 1);
+		}
 
 		m_heightmap.setResolution(200, 200);
 
@@ -239,7 +257,15 @@ namespace UI
 
 		// List
 		m_heightmapList.setTitle(_("heightmap.list_header"));
-		m_heightmapList.setListGrow(1);
+		if (Display::isPortrait())
+		{
+			/* Hug the single visible entry instead of filling the cell */
+			m_heightmapList.setSize(LV_PCT(100), LV_SIZE_CONTENT);
+		}
+		else
+		{
+			m_heightmapList.setListGrow(1);
+		}
 
 		clear();
 	}
@@ -258,6 +284,21 @@ namespace UI
 		ZoneScoped;
 		UI_LOCK();
 		m_heightmapList.setItemCount(count, *this);
+
+		if (Display::isPortrait() && count > 0)
+		{
+			/* Vertical space belongs to the heatmap, so only one saved map is shown and the rest are scrolled to.
+			 * The height is taken from a real item so it tracks the font and padding of the active theme. */
+			if (auto item = m_heightmapList.getItem(0); item != nullptr)
+			{
+				item->updateLayout();
+				const int32_t itemHeight = item->getHeight();
+				if (itemHeight > 0)
+				{
+					m_heightmapList.getListContainer().setMaxHeight(itemHeight);
+				}
+			}
+		}
 	}
 
 	void HeightmapView::setHeightmapName(const size_t index, const std::string& name)
